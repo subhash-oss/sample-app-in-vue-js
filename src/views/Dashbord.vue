@@ -18,18 +18,25 @@
         Dashboard
       </h2>
 
-      <ul class="p-4">
+      <ul class="p-4 space-y-1">
         <li
           @click="activeTab = 'settings'; isSidebarOpen = false"
           class="cursor-pointer rounded p-2 hover:bg-gray-700"
         >
           ⚙️ Settings
         </li>
+
+        <li
+          @click="activeTab = 'listing'; isSidebarOpen = false"
+          class="cursor-pointer rounded p-2 hover:bg-gray-700"
+        >
+          📋 List
+        </li>
       </ul>
     </aside>
 
     <!-- Content -->
-    <main class="flex-1 p-4 md:p-8">
+    <main class="flex-1 p-4 md:p-8 overflow-y-auto">
       <!-- Header -->
       <div class="mb-4 flex items-center justify-between border-b pb-3">
         <h1 class="text-xl font-semibold">Dashboard</h1>
@@ -74,6 +81,7 @@
         ☰ Menu
       </button>
 
+      <!-- SETTINGS -->
       <div v-if="activeTab === 'settings'">
         <h2 class="mb-6 text-2xl font-semibold">User Settings</h2>
 
@@ -150,6 +158,12 @@
           </p>
         </div>
       </div>
+
+      <!-- LISTING -->
+      <div v-if="activeTab === 'listing'">
+        <h2 class="mb-6 text-2xl font-semibold"> User Listing Page</h2>
+        <UserList />
+      </div>
     </main>
 
     <!-- CROPPER MODAL -->
@@ -157,7 +171,7 @@
       v-if="showCropper"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
     >
-      <div class="rounded bg-white p-4 w-[350px]">
+      <div class="w-[350px] rounded bg-white p-4">
         <img ref="cropperImage" />
 
         <div class="mt-4 flex justify-end gap-3">
@@ -179,6 +193,7 @@ import { ref, onMounted, computed, nextTick } from "vue"
 import { useRouter } from "vue-router"
 import Cropper from "cropperjs"
 import "cropperjs/dist/cropper.css"
+  import UserList from '../components/UserList.vue'
 
 const router = useRouter()
 
@@ -269,12 +284,19 @@ const enablePasswordEdit = async () => {
 const saveSettings = () => {
   let users = JSON.parse(localStorage.getItem("users")) || []
   const logged = JSON.parse(localStorage.getItem("loggedInUser"))
-  const index = users.findIndex(u => u.username === logged.username)
+
+  const index = users.findIndex(
+    u => u.username === logged.username
+  )
 
   if (index !== -1) {
     users[index] = { ...user.value }
     localStorage.setItem("users", JSON.stringify(users))
-    localStorage.setItem("loggedInUser", JSON.stringify(user.value))
+    localStorage.setItem(
+      "loggedInUser",
+      JSON.stringify(user.value)
+    )
+
     successMessage.value = "✅ Settings updated successfully"
     isEditingUsername.value = false
     isEditingPassword.value = false
