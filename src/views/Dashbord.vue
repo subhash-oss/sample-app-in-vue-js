@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-[92vh] overflow-hidden">
+  <div class="flex h-[100vh] overflow-hidden">
     <!-- Mobile Overlay -->
     <div
       v-if="isSidebarOpen"
@@ -9,7 +9,7 @@
 
     <!-- Sidebar -->
     <aside
-      class="fixed left-0 top-0 z-50 h-[92vh] w-64 bg-gray-800 text-white
+      class="fixed left-0 top-0 z-50 h-[100vh] w-64 bg-gray-800 text-white
              transform transition-transform duration-300
              md:static md:translate-x-0"
       :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
@@ -34,7 +34,6 @@
       <div class="mb-4 flex items-center justify-between border-b pb-3">
         <h1 class="text-xl font-semibold">Dashboard</h1>
 
-        <!-- Profile -->
         <div class="relative">
           <img
             v-if="user.image"
@@ -43,7 +42,6 @@
             class="h-10 w-10 cursor-pointer rounded-full border object-cover"
           />
 
-          <!-- Dropdown -->
           <div
             v-if="isProfileMenuOpen"
             class="absolute right-0 mt-2 w-56 rounded border bg-white shadow-lg z-50"
@@ -68,7 +66,7 @@
         </div>
       </div>
 
-      <!-- Mobile Menu Button -->
+      <!-- Mobile Menu -->
       <button
         @click="isSidebarOpen = true"
         class="mb-4 rounded bg-gray-800 px-3 py-2 text-white md:hidden"
@@ -77,9 +75,7 @@
       </button>
 
       <div v-if="activeTab === 'settings'">
-        <h2 class="mb-6 text-2xl font-semibold">
-          User Settings
-        </h2>
+        <h2 class="mb-6 text-2xl font-semibold">User Settings</h2>
 
         <div class="max-w-md space-y-5">
           <!-- Username -->
@@ -94,15 +90,8 @@
                 :class="!isEditingUsername
                   ? 'cursor-not-allowed bg-gray-100'
                   : 'bg-white'"
-                type="text"
               />
-
-              <button
-                @click.stop="enableUsernameEdit"
-                class="text-blue-500 hover:text-blue-700"
-              >
-                ✏️
-              </button>
+              <button @click.stop="enableUsernameEdit">✏️</button>
             </div>
           </div>
 
@@ -118,15 +107,8 @@
                 :class="!isEditingPassword
                   ? 'cursor-not-allowed bg-gray-100'
                   : 'bg-white'"
-                type="text"
               />
-
-              <button
-                @click.stop="enablePasswordEdit"
-                class="text-blue-500 hover:text-blue-700"
-              >
-                ✏️
-              </button>
+              <button @click.stop="enablePasswordEdit">✏️</button>
             </div>
           </div>
 
@@ -138,60 +120,75 @@
               <img
                 v-if="user.image"
                 :src="user.image"
-                class="h-20 w-20 rounded-full border object-cover"
+                class="h-20 w-20 cursor-pointer rounded-full border object-cover"
+                @click="openCropper"
               />
 
               <input
                 type="file"
                 accept="image/png, image/jpeg"
                 @change="handleImageUpload"
-                class="block w-full text-sm"
               />
             </div>
 
-            <p v-if="imageError" class="mt-1 text-sm text-red-600">
+            <p v-if="imageError" class="text-sm text-red-600">
               {{ imageError }}
             </p>
           </div>
 
-          <!-- Save Button -->
           <button
             @click="saveSettings"
             :disabled="!canSave"
-            class="mt-4 rounded px-5 py-2 text-white transition"
-            :class="canSave
-              ? 'bg-blue-500 hover:bg-blue-600'
-              : 'cursor-not-allowed bg-gray-400'"
+            class="mt-4 rounded px-5 py-2 text-white"
+            :class="canSave ? 'bg-blue-500' : 'bg-gray-400'"
           >
             Save Changes
           </button>
 
-          <p v-if="successMessage" class="mt-3 text-green-600">
+          <p v-if="successMessage" class="text-green-600">
             {{ successMessage }}
           </p>
         </div>
       </div>
     </main>
+
+    <!-- CROPPER MODAL -->
+    <div
+      v-if="showCropper"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+    >
+      <div class="rounded bg-white p-4 w-[350px]">
+        <img ref="cropperImage" />
+
+        <div class="mt-4 flex justify-end gap-3">
+          <button @click="closeCropper">Cancel</button>
+          <button
+            class="rounded bg-blue-500 px-4 py-2 text-white"
+            @click="cropImage"
+          >
+            Crop
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, nextTick } from "vue"
 import { useRouter } from "vue-router"
+import Cropper from "cropperjs"
+import "cropperjs/dist/cropper.css"
 
 const router = useRouter()
 
 const activeTab = ref("settings")
-const successMessage = ref("")
 const isSidebarOpen = ref(false)
 const isProfileMenuOpen = ref(false)
+const successMessage = ref("")
 const imageError = ref("")
 
-const user = ref({
-  username: "",
-  password: "",
-  image: ""
-})
+const user = ref({ username: "", password: "", image: "" })
 
 const isEditingUsername = ref(false)
 const isEditingPassword = ref(false)
@@ -199,80 +196,86 @@ const isEditingPassword = ref(false)
 const usernameInput = ref(null)
 const passwordInput = ref(null)
 
-const canSave = computed(() => {
-  return (
-    isEditingUsername.value ||
-    isEditingPassword.value ||
-    !!user.value.image
-  )
-})
+const canSave = computed(() =>
+  isEditingUsername.value ||
+  isEditingPassword.value ||
+  !!user.value.image
+)
 
 onMounted(() => {
-  const loggedInUser =
-    JSON.parse(localStorage.getItem("loggedInUser"))
-
-  if (loggedInUser) {
-    user.value = { ...loggedInUser }
-  }
+  const u = JSON.parse(localStorage.getItem("loggedInUser"))
+  if (u) user.value = { ...u }
 })
 
 const toggleProfileMenu = () => {
   isProfileMenuOpen.value = !isProfileMenuOpen.value
 }
 
-const handleImageUpload = (event) => {
-  const file = event.target.files[0]
-  imageError.value = ""
+/* CROPPER */
+const showCropper = ref(false)
+const cropperImage = ref(null)
+let cropper = null
 
+const openCropper = () => {
+  showCropper.value = true
+  nextTick(() => {
+    cropperImage.value.src = user.value.image
+    cropper = new Cropper(cropperImage.value, {
+      aspectRatio: 1,
+      viewMode: 1
+    })
+  })
+}
+
+const closeCropper = () => {
+  cropper.destroy()
+  showCropper.value = false
+}
+
+const cropImage = () => {
+  const canvas = cropper.getCroppedCanvas({
+    width: 300,
+    height: 300
+  })
+
+  user.value.image = canvas.toDataURL("image/jpeg")
+  closeCropper()
+}
+
+const handleImageUpload = (e) => {
+  const file = e.target.files[0]
   if (!file) return
-
-  if (!["image/png", "image/jpeg"].includes(file.type)) {
-    imageError.value = "Only PNG or JPG images are allowed"
-    return
-  }
 
   const reader = new FileReader()
   reader.onload = () => {
     user.value.image = reader.result
+    openCropper()
   }
   reader.readAsDataURL(file)
 }
 
 const enableUsernameEdit = async () => {
   isEditingUsername.value = true
-  successMessage.value = ""
   await nextTick()
   usernameInput.value.focus()
 }
 
 const enablePasswordEdit = async () => {
   isEditingPassword.value = true
-  successMessage.value = ""
   await nextTick()
   passwordInput.value.focus()
 }
 
 const saveSettings = () => {
-  if (!canSave.value) return
-
   let users = JSON.parse(localStorage.getItem("users")) || []
-  const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"))
-
-  const index = users.findIndex(
-    u => u.username === loggedInUser.username
-  )
+  const logged = JSON.parse(localStorage.getItem("loggedInUser"))
+  const index = users.findIndex(u => u.username === logged.username)
 
   if (index !== -1) {
     users[index] = { ...user.value }
-
     localStorage.setItem("users", JSON.stringify(users))
-    localStorage.setItem(
-      "loggedInUser",
-      JSON.stringify(user.value)
-    )
-
+    localStorage.setItem("loggedInUser", JSON.stringify(user.value))
     successMessage.value = "✅ Settings updated successfully"
-
     isEditingUsername.value = false
     isEditingPassword.value = false
   }
