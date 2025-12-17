@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-[100vh] overflow-hidden">
+  <div class="flex  overflow-hidden">
     <!-- Mobile Overlay -->
     <div
       v-if="isSidebarOpen"
@@ -9,7 +9,7 @@
 
     <!-- Sidebar -->
     <aside
-      class="fixed left-0 top-0 z-50 h-[100vh] w-64 bg-gray-800 text-white
+      class="fixed left-0 top-0 z-50 w-64 bg-gray-800 text-white
              transform transition-transform duration-300
              md:static md:translate-x-0"
       :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
@@ -78,7 +78,7 @@
         @click="isSidebarOpen = true"
         class="mb-4 rounded bg-gray-800 px-3 py-2 text-white md:hidden"
       >
-        ☰ Menu
+        ☰ Dashboard Menu
       </button>
 
       <!-- SETTINGS -->
@@ -161,7 +161,7 @@
 
       <!-- LISTING -->
       <div v-if="activeTab === 'listing'">
-        <h2 class="mb-6 text-2xl font-semibold"> User Listing Page</h2>
+        <h2 class="mb-3 text-2xl font-semibold"> User Listing Page</h2>
         <UserList />
       </div>
     </main>
