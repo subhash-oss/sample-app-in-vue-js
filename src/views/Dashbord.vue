@@ -30,6 +30,44 @@
 
     <!-- Content -->
     <main class="flex-1 p-4 md:p-8">
+      <!-- Header -->
+      <div class="mb-4 flex items-center justify-between border-b pb-3">
+        <h1 class="text-xl font-semibold">Dashboard</h1>
+
+        <!-- Profile -->
+        <div class="relative">
+          <img
+            v-if="user.image"
+            :src="user.image"
+            @click="toggleProfileMenu"
+            class="h-10 w-10 cursor-pointer rounded-full border object-cover"
+          />
+
+          <!-- Dropdown -->
+          <div
+            v-if="isProfileMenuOpen"
+            class="absolute right-0 mt-2 w-56 rounded border bg-white shadow-lg z-50"
+          >
+            <div class="flex flex-col items-center border-b p-4">
+              <img
+                :src="user.image"
+                class="h-16 w-16 rounded-full border object-cover"
+              />
+              <p class="mt-2 text-sm font-medium">
+                {{ user.username }}
+              </p>
+            </div>
+
+            <button
+              @click="logout"
+              class="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Mobile Menu Button -->
       <button
         @click="isSidebarOpen = true"
@@ -92,7 +130,6 @@
             </div>
           </div>
 
-
           <!-- Profile Image -->
           <div>
             <label class="mb-2 block font-medium">Profile Image</label>
@@ -140,10 +177,14 @@
 
 <script setup>
 import { ref, onMounted, computed, nextTick } from "vue"
+import { useRouter } from "vue-router"
+
+const router = useRouter()
 
 const activeTab = ref("settings")
 const successMessage = ref("")
 const isSidebarOpen = ref(false)
+const isProfileMenuOpen = ref(false)
 const imageError = ref("")
 
 const user = ref({
@@ -174,6 +215,10 @@ onMounted(() => {
     user.value = { ...loggedInUser }
   }
 })
+
+const toggleProfileMenu = () => {
+  isProfileMenuOpen.value = !isProfileMenuOpen.value
+}
 
 const handleImageUpload = (event) => {
   const file = event.target.files[0]
@@ -231,5 +276,10 @@ const saveSettings = () => {
     isEditingUsername.value = false
     isEditingPassword.value = false
   }
+}
+
+const logout = () => {
+  localStorage.removeItem("loggedInUser")
+  router.push("/")
 }
 </script>
